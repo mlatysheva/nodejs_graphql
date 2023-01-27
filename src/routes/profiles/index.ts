@@ -2,6 +2,8 @@ import { FastifyPluginAsyncJsonSchemaToTs } from '@fastify/type-provider-json-sc
 import { idParamSchema } from '../../utils/reusedSchemas';
 import { createProfileBodySchema, changeProfileBodySchema } from './schema';
 import type { ProfileEntity } from '../../utils/DB/entities/DBProfiles';
+import { validateUuid } from '../../utils/helpers/validateUuid';
+import { ErrorMessage } from '../../utils/constants/errors';
 
 const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
   fastify
@@ -20,13 +22,17 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
       },
     },
     async function (request, reply): Promise<ProfileEntity> {
-      const profile = await fastify.db.profiles.findOne( { key: 'id', equals: request.params.id});
+      const id = request.params.id;
+      // if (!validateUuid(id)) {
+      //   reply.statusCode = 400;
+      //   throw new Error(ErrorMessage.INVALID_ID);
+      // }
+      const profile = await fastify.db.profiles.findOne( { key: 'id', equals: id});
       if (!profile) {
         reply.statusCode = 404;
-        throw new Error ('Not found');
-      } else {
-        return profile;
+        throw new Error (ErrorMessage.NOT_FOUND);
       }
+      return profile;
     }
   );
 
@@ -39,6 +45,11 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
     },
     async function (request, reply): Promise<ProfileEntity> {
       const profile = request.body;
+      const doesExist = await fastify.db.profiles.findOne( { key: 'id', equals: request.body.userId});
+      if (doesExist) {
+        reply.statusCode = 400;
+        throw new Error (ErrorMessage.PROFILE_EXISTS);
+      };
       return await fastify.db.profiles.create(profile);
     }
   );
@@ -51,13 +62,17 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
       },
     },
     async function (request, reply): Promise<ProfileEntity> {
-      const profile = await fastify.db.profiles.findOne({ key: 'id', equals: request.params.id });
+      const id = request.params.id;
+      // if (!validateUuid(id)) {
+      //   reply.statusCode = 400;
+      //   throw new Error(ErrorMessage.INVALID_ID);
+      // }
+      const profile = await fastify.db.profiles.findOne({ key: 'id', equals: id });
       if (!profile) {
         reply.statusCode = 404;
-        throw new Error ('Not found');
-      } else {
-        return await fastify.db.profiles.delete(request.params.id);
+        throw new Error (ErrorMessage.NOT_FOUND);
       }
+      return await fastify.db.profiles.delete(id);
     }
   );
 
@@ -70,14 +85,18 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
       },
     },
     async function (request, reply): Promise<ProfileEntity> {
-      const profile = await fastify.db.profiles.findOne({ key: 'id', equals: request.params.id });
+      const id = request.params.id;
+      if (!validateUuid(id)) {
+        reply.statusCode = 400;
+        throw new Error(ErrorMessage.INVALID_ID);
+      }
+      const profile = await fastify.db.profiles.findOne({ key: 'id', equals: id });
       if (!profile) {
         reply.statusCode = 404;
-        throw new Error ('Not found');
-      } else {
-        const updatedProfile = await fastify.db.profiles.change(request.params.id, request.body);
-        return updatedProfile;
+        throw new Error (ErrorMessage.NOT_FOUND);
       } 
+      const updatedProfile = await fastify.db.profiles.change(id, request.body);
+      return updatedProfile;
     }
   );
 };

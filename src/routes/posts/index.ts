@@ -2,6 +2,8 @@ import { FastifyPluginAsyncJsonSchemaToTs } from '@fastify/type-provider-json-sc
 import { idParamSchema } from '../../utils/reusedSchemas';
 import { createPostBodySchema, changePostBodySchema } from './schema';
 import type { PostEntity } from '../../utils/DB/entities/DBPosts';
+import { validateUuid } from '../../utils/helpers/validateUuid';
+import { ErrorMessage } from '../../utils/constants/errors';
 
 const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
   fastify
@@ -18,10 +20,15 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
       },
     },
     async function (request, reply): Promise<PostEntity> {
-      const post = await fastify.db.posts.findOne({ key: 'id', equals: request.params.id});
+      const id = request.params.id;
+      // if (!validateUuid(id)) {
+      //   reply.statusCode = 400;
+      //   throw new Error(ErrorMessage.INVALID_ID);
+      // }
+      const post = await fastify.db.posts.findOne({ key: 'id', equals: id});
       if (!post) {
         reply.statusCode = 404;
-        throw new Error('Not found');
+        throw new Error(ErrorMessage.NOT_FOUND);
       } else {
         return post;
       }
@@ -49,12 +56,17 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
       },
     },
     async function (request, reply): Promise<PostEntity> {
-      const post = await fastify.db.posts.findOne({ key: 'id', equals: request.params.id });
+      const id = request.params.id;
+      if (!validateUuid(id)) {
+        reply.statusCode = 400;
+        throw new Error(ErrorMessage.INVALID_ID);
+      }
+      const post = await fastify.db.posts.findOne({ key: 'id', equals: id });
       if (!post) {
         reply.statusCode = 404;
-        throw new Error('Not found');
+        throw new Error(ErrorMessage.NOT_FOUND);
       } else {
-        return await fastify.db.posts.delete(request.params.id);
+        return await fastify.db.posts.delete(id);
       }
     }
   );
@@ -68,14 +80,18 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
       },
     },
     async function (request, reply): Promise<PostEntity> {
-      const post = await fastify.db.posts.findOne({ key: 'id', equals: request.params.id });
+      const id = request.params.id;
+      if (!validateUuid(id)) {
+        reply.statusCode = 400;
+        throw new Error(ErrorMessage.INVALID_ID);
+      }
+      const post = await fastify.db.posts.findOne({ key: 'id', equals: id });
       if (!post) {
         reply.statusCode = 404;
-        throw new Error ('Not found');
-      } else {
-        const updatedPost = await fastify.db.posts.change(request.params.id, request.body);
-        return updatedPost;
-      }
+        throw new Error (ErrorMessage.NOT_FOUND);
+      } 
+      const updatedPost = await fastify.db.posts.change(id, request.body);
+      return updatedPost;
     }
   );
 };

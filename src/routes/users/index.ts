@@ -6,6 +6,8 @@ import {
   // subscribeBodySchema,
 } from './schemas';
 import type { UserEntity } from '../../utils/DB/entities/DBUsers';
+import { validateUuid } from '../../utils/helpers/validateUuid';
+import { ErrorMessage } from '../../utils/constants/errors';
 
 const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
   fastify
@@ -22,9 +24,15 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
       },
     },
     async function (request, reply): Promise<UserEntity> {
-      const user = await fastify.db.users.findOne({ key: 'id', equals: request.params.id});
+      const id = request.params.id;
+      // if (!validateUuid(id)) {
+      //   reply.statusCode = 400;
+      //   throw new Error(ErrorMessage.INVALID_ID);
+      // }
+      const user = await fastify.db.users.findOne({ key: 'id', equals: id});
       if (!user) {
-        throw new Error('Not found');
+        reply.statusCode = 404;
+        throw new Error(ErrorMessage.NOT_FOUND);
       } else {
         return user;
       }
@@ -52,9 +60,14 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
       },
     },
     async function (request, reply): Promise<UserEntity> {
-      const user = await fastify.db.users.findOne({ key: 'id', equals: request.params.id });
+      const id = request.params.id;
+      // if (!validateUuid(id)) {
+      //   reply.statusCode = 400;
+      //   throw new Error(ErrorMessage.INVALID_ID);
+      // }
+      const user = await fastify.db.users.findOne({ key: 'id', equals: id });
       if (!user) {
-        throw new Error('Not found');
+        throw new Error(ErrorMessage.NOT_FOUND);
       } else {
         return await fastify.db.users.delete(request.params.id);
       }
@@ -94,9 +107,14 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
       },
     },
     async function (request, reply): Promise<UserEntity> {
-      const user = await fastify.db.users.findOne({ key: 'id', equals: request.params.id });
+      const id = request.params.id;
+      if (!validateUuid(id)) {
+        reply.statusCode = 400;
+        throw new Error(ErrorMessage.INVALID_ID);
+      }
+      const user = await fastify.db.users.findOne({ key: 'id', equals: id });
       if (!user) {
-        throw new Error ('Not found');
+        throw new Error (ErrorMessage.NOT_FOUND);
       } else {
         const updatedUser = await fastify.db.users.change(request.params.id, request.body);
         return updatedUser;

@@ -2,6 +2,8 @@ import { FastifyPluginAsyncJsonSchemaToTs } from '@fastify/type-provider-json-sc
 import { idParamSchema } from '../../utils/reusedSchemas';
 import { changeMemberTypeBodySchema } from './schema';
 import type { MemberTypeEntity } from '../../utils/DB/entities/DBMemberTypes';
+import { validateUuid } from '../../utils/helpers/validateUuid';
+import { ErrorMessage } from '../../utils/constants/errors';
 
 const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
   fastify
@@ -20,13 +22,17 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
       },
     },
     async function (request, reply): Promise<MemberTypeEntity> {
-      const memberType = await fastify.db.memberTypes.findOne({ key: 'id', equals: request.params.id});
+      const id = request.params.id;
+      // if (!validateUuid(id)) {
+      //   reply.statusCode = 400;
+      //   throw new Error(ErrorMessage.INVALID_ID);
+      // }
+      const memberType = await fastify.db.memberTypes.findOne({ key: 'id', equals: id});
       if (!memberType) {
         reply.statusCode = 404;
-        throw new Error('Not found');
-      } else {
-        return memberType;
+        throw new Error(ErrorMessage.NOT_FOUND);
       }
+      return memberType;
     }
   );
 
@@ -39,14 +45,18 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
       },
     },
     async function (request, reply): Promise<MemberTypeEntity> {
-      const memberType = await fastify.db.memberTypes.findOne({ key: 'id', equals: request.params.id });
+      const id = request.params.id;
+      if (!validateUuid(id)) {
+        reply.statusCode = 400;
+        throw new Error(ErrorMessage.INVALID_ID);
+      }
+      const memberType = await fastify.db.memberTypes.findOne({ key: 'id', equals: id });
       if (!memberType) {
         reply.statusCode = 404;
-        throw new Error ('Not found');
-      } else {
-        const updatedMemberType = await fastify.db.memberTypes.change(request.params.id, request.body);
-        return updatedMemberType;
-      }
+        throw new Error (ErrorMessage.NOT_FOUND);
+      } 
+      const updatedMemberType = await fastify.db.memberTypes.change(id, request.body);
+      return updatedMemberType;
     }
   );
 };
