@@ -8,7 +8,9 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
 ): Promise<void> => {
   fastify.get('/', async function (request, reply): Promise<
     ProfileEntity[]
-  > {});
+  > {
+    return await fastify.db.profiles.findMany();
+  });
 
   fastify.get(
     '/:id',
@@ -17,7 +19,15 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         params: idParamSchema,
       },
     },
-    async function (request, reply): Promise<ProfileEntity> {}
+    async function (request, reply): Promise<ProfileEntity> {
+      const profile = await fastify.db.profiles.findOne( { key: 'id', equals: request.params.id});
+      if (!profile) {
+        reply.statusCode = 404;
+        throw new Error ('Not found');
+      } else {
+        return profile;
+      }
+    }
   );
 
   fastify.post(
@@ -27,7 +37,10 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         body: createProfileBodySchema,
       },
     },
-    async function (request, reply): Promise<ProfileEntity> {}
+    async function (request, reply): Promise<ProfileEntity> {
+      const profile = request.body;
+      return await fastify.db.profiles.create(profile);
+    }
   );
 
   fastify.delete(
@@ -37,7 +50,15 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         params: idParamSchema,
       },
     },
-    async function (request, reply): Promise<ProfileEntity> {}
+    async function (request, reply): Promise<ProfileEntity> {
+      const profile = await fastify.db.profiles.findOne({ key: 'id', equals: request.params.id });
+      if (!profile) {
+        reply.statusCode = 404;
+        throw new Error ('Not found');
+      } else {
+        return await fastify.db.profiles.delete(request.params.id);
+      }
+    }
   );
 
   fastify.patch(
@@ -48,7 +69,16 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         params: idParamSchema,
       },
     },
-    async function (request, reply): Promise<ProfileEntity> {}
+    async function (request, reply): Promise<ProfileEntity> {
+      const profile = await fastify.db.profiles.findOne({ key: 'id', equals: request.params.id });
+      if (!profile) {
+        reply.statusCode = 404;
+        throw new Error ('Not found');
+      } else {
+        const updatedProfile = await fastify.db.profiles.change(request.params.id, request.body);
+        return updatedProfile;
+      } 
+    }
   );
 };
 
