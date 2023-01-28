@@ -2,7 +2,6 @@ import { FastifyPluginAsyncJsonSchemaToTs } from '@fastify/type-provider-json-sc
 import { idParamSchema } from '../../utils/reusedSchemas';
 import { changeMemberTypeBodySchema } from './schema';
 import type { MemberTypeEntity } from '../../utils/DB/entities/DBMemberTypes';
-import { validateUuid } from '../../utils/helpers/validateUuid';
 import { ErrorMessage } from '../../utils/constants/errors';
 
 const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
@@ -21,18 +20,13 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         params: idParamSchema,
       },
     },
-    async function (request, reply): Promise<MemberTypeEntity> {
+    async function (request, _): Promise<MemberTypeEntity> {
       const id = request.params.id;
-      // if (!validateUuid(id)) {
-      //   reply.statusCode = 400;
-      //   throw new Error(ErrorMessage.INVALID_ID);
-      // }
       const memberType = await fastify.db.memberTypes.findOne({ key: 'id', equals: id});
       if (!memberType) {
-        reply.statusCode = 404;
-        throw new Error(ErrorMessage.NOT_FOUND);
+        throw fastify.httpErrors.notFound(ErrorMessage.MEMBER_NOT_FOUND);
       }
-      return memberType;
+      return memberType;      
     }
   );
 
@@ -44,19 +38,16 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         params: idParamSchema,
       },
     },
-    async function (request, reply): Promise<MemberTypeEntity> {
-      const id = request.params.id;
-      if (!validateUuid(id)) {
-        reply.statusCode = 400;
-        throw new Error(ErrorMessage.INVALID_ID);
-      }
-      const memberType = await fastify.db.memberTypes.findOne({ key: 'id', equals: id });
-      if (!memberType) {
-        reply.statusCode = 404;
-        throw new Error (ErrorMessage.NOT_FOUND);
-      } 
-      const updatedMemberType = await fastify.db.memberTypes.change(id, request.body);
-      return updatedMemberType;
+    async function (request, _): Promise<MemberTypeEntity> {   
+      try {
+				const updatedMemberType = await fastify.db.memberTypes.change(
+					request.params.id,
+					request.body
+				);
+				return updatedMemberType;
+			} catch (error) {
+        throw fastify.httpErrors.badRequest(ErrorMessage.BAD_REQUEST);
+			} 
     }
   );
 };

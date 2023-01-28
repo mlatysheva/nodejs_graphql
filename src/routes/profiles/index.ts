@@ -21,17 +21,15 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         params: idParamSchema,
       },
     },
-    async function (request, reply): Promise<ProfileEntity> {
-      const id = request.params.id;
-      // if (!validateUuid(id)) {
-      //   reply.statusCode = 400;
-      //   throw new Error(ErrorMessage.INVALID_ID);
-      // }
-      const profile = await fastify.db.profiles.findOne( { key: 'id', equals: id});
+    async function (request, _): Promise<ProfileEntity> {
+      const profile = await fastify.db.profiles.findOne({ 
+        key: 'id',
+        equals: request.params.id,
+      });
       if (!profile) {
-        reply.statusCode = 404;
-        throw new Error (ErrorMessage.NOT_FOUND);
-      }
+        throw fastify.httpErrors.notFound(ErrorMessage.NOT_FOUND);
+      };
+
       return profile;
     }
   );
@@ -43,14 +41,32 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         body: createProfileBodySchema,
       },
     },
-    async function (request, reply): Promise<ProfileEntity> {
-      const profile = request.body;
-      const doesExist = await fastify.db.profiles.findOne( { key: 'id', equals: request.body.userId});
-      if (doesExist) {
-        reply.statusCode = 400;
-        throw new Error (ErrorMessage.PROFILE_EXISTS);
+    async function (request, _): Promise<ProfileEntity> {
+      const user = await fastify.db.users.findOne({
+        key: 'id',
+        equals: request.body.userId,
+      });
+      if (!user) {
+        throw fastify.httpErrors.notFound(ErrorMessage.NOT_FOUND);
       };
-      return await fastify.db.profiles.create(profile);
+
+      const profileExists = await fastify.db.profiles.findOne({ 
+        key: 'userId',
+        equals: request.body.userId
+      });
+      if (profileExists) {
+        throw fastify.httpErrors.badRequest(ErrorMessage.PROFILE_EXISTS);
+      };
+      
+      const profile = await fastify.db.profiles.create(request.body);
+
+      const memberTypes = ['basic', 'business'];
+
+      if (!memberTypes.includes(profile.memberTypeId)) {
+        throw fastify.httpErrors.badRequest(ErrorMessage.INVALID_MEMBER_TYPE);
+      };
+
+      return profile;
     }
   );
 
@@ -61,18 +77,20 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         params: idParamSchema,
       },
     },
-    async function (request, reply): Promise<ProfileEntity> {
-      const id = request.params.id;
-      // if (!validateUuid(id)) {
-      //   reply.statusCode = 400;
-      //   throw new Error(ErrorMessage.INVALID_ID);
-      // }
-      const profile = await fastify.db.profiles.findOne({ key: 'id', equals: id });
-      if (!profile) {
-        reply.statusCode = 404;
-        throw new Error (ErrorMessage.NOT_FOUND);
+    async function (request, _): Promise<ProfileEntity> {
+      if (!validateUuid(request.params.id)) {
+        throw fastify.httpErrors.badRequest(ErrorMessage.BAD_REQUEST);
       }
-      return await fastify.db.profiles.delete(id);
+
+      const profile = await fastify.db.profiles.findOne({
+        key: 'id',
+        equals: request.params.id
+      });
+      if (!profile) {
+        throw fastify.httpErrors.notFound(ErrorMessage.NOT_FOUND);
+      };
+
+      return await fastify.db.profiles.delete(request.params.id);
     }
   );
 
@@ -84,19 +102,17 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         params: idParamSchema,
       },
     },
-    async function (request, reply): Promise<ProfileEntity> {
-      const id = request.params.id;
-      if (!validateUuid(id)) {
-        reply.statusCode = 400;
-        throw new Error(ErrorMessage.INVALID_ID);
-      }
-      const profile = await fastify.db.profiles.findOne({ key: 'id', equals: id });
-      if (!profile) {
-        reply.statusCode = 404;
-        throw new Error (ErrorMessage.NOT_FOUND);
-      } 
-      const updatedProfile = await fastify.db.profiles.change(id, request.body);
-      return updatedProfile;
+    async function (request, _): Promise<ProfileEntity> {
+      try {
+				const updatedProfile = await fastify.db.profiles.change(
+					request.params.id,
+					request.body
+				);
+
+				return updatedProfile;
+			} catch (error) {
+        throw fastify.httpErrors.badRequest(ErrorMessage.BAD_REQUEST);
+			} 
     }
   );
 };

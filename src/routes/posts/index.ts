@@ -19,16 +19,13 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         params: idParamSchema,
       },
     },
-    async function (request, reply): Promise<PostEntity> {
-      const id = request.params.id;
-      // if (!validateUuid(id)) {
-      //   reply.statusCode = 400;
-      //   throw new Error(ErrorMessage.INVALID_ID);
-      // }
-      const post = await fastify.db.posts.findOne({ key: 'id', equals: id});
+    async function (request, _): Promise<PostEntity> {
+      const post = await fastify.db.posts.findOne({
+        key: 'id',
+        equals: request.params.id,
+      });
       if (!post) {
-        reply.statusCode = 404;
-        throw new Error(ErrorMessage.NOT_FOUND);
+        throw fastify.httpErrors.notFound(ErrorMessage.NOT_FOUND);
       } else {
         return post;
       }
@@ -42,7 +39,7 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         body: createPostBodySchema,
       },
     },
-    async function (request, reply): Promise<PostEntity> {
+    async function (request, _): Promise<PostEntity> {
       const post = request.body;
       return await fastify.db.posts.create(post);
     }
@@ -55,18 +52,18 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         params: idParamSchema,
       },
     },
-    async function (request, reply): Promise<PostEntity> {
-      const id = request.params.id;
-      if (!validateUuid(id)) {
-        reply.statusCode = 400;
-        throw new Error(ErrorMessage.INVALID_ID);
+    async function (request, _): Promise<PostEntity> {
+      if (!validateUuid(request.params.id)) {
+        throw fastify.httpErrors.badRequest(ErrorMessage.BAD_REQUEST);
       }
-      const post = await fastify.db.posts.findOne({ key: 'id', equals: id });
+      const post = await fastify.db.posts.findOne({
+        key: 'id',
+        equals: request.params.id,
+      });
       if (!post) {
-        reply.statusCode = 404;
-        throw new Error(ErrorMessage.NOT_FOUND);
+        throw fastify.httpErrors.notFound(ErrorMessage.NOT_FOUND);
       } else {
-        return await fastify.db.posts.delete(id);
+        return await fastify.db.posts.delete(request.params.id);
       }
     }
   );
@@ -79,19 +76,20 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
         params: idParamSchema,
       },
     },
-    async function (request, reply): Promise<PostEntity> {
-      const id = request.params.id;
-      if (!validateUuid(id)) {
-        reply.statusCode = 400;
-        throw new Error(ErrorMessage.INVALID_ID);
-      }
-      const post = await fastify.db.posts.findOne({ key: 'id', equals: id });
+    async function (request, _): Promise<PostEntity> {
+      if (!validateUuid(request.params.id)) {
+        throw fastify.httpErrors.badRequest(ErrorMessage.BAD_REQUEST);
+      };
+
+      const post = await fastify.db.posts.findOne({
+        key: 'id',
+        equals: request.params.id,
+      });
       if (!post) {
-        reply.statusCode = 404;
-        throw new Error (ErrorMessage.NOT_FOUND);
-      } 
-      const updatedPost = await fastify.db.posts.change(id, request.body);
-      return updatedPost;
+        throw fastify.httpErrors.notFound(ErrorMessage.NOT_FOUND);
+      };
+
+      return await fastify.db.posts.change(request.params.id, request.body);
     }
   );
 };
