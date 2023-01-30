@@ -25,7 +25,6 @@ export const createUserDTO = new GraphQLInputObjectType({
 export const updateUserDTO = new GraphQLInputObjectType({
 	name: 'updateUserDTO',
 	fields: {
-    id: { type: new GraphQLNonNull(GraphQLID)},
 		firstName: { type: GraphQLString },
 		lastName: { type: GraphQLString },
 		email: { type: GraphQLString },

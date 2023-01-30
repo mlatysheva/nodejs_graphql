@@ -1,17 +1,13 @@
-// import { GraphQLID } from 'graphql';
-// import { UserEntity } from '../../../utils/DB/entities/DBUsers';
-import { updateUserDTO, userDTO } from '../types/user.dto';
+import { shortUserDTO, updateUserDTO } from '../types/user.dto';
+import { GraphQLID } from 'graphql';
 
 export const updateUserMutation = {
-  type: userDTO,
+  type: shortUserDTO,
   args: {
-    input: { type: updateUserDTO } 
+    id: { type: GraphQLID },
+    input: { type: updateUserDTO },    
   },
   resolve: async (_: any, args: any, context: any) => {
-    try {
-      return await context.db.users.change(args.input.id, args.input);
-    } catch (err) {
-      return err;
-    };    
-  },
-}
+    return await context.db.users.change(args.id, args.input);
+  }
+};
