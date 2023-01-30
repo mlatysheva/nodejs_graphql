@@ -22,7 +22,6 @@ export const createPostDTO = new GraphQLInputObjectType({
 export const updatePostDTO = new GraphQLInputObjectType({
 	name: 'updatePostDTO',
 	fields: {
-    id: { type: new GraphQLNonNull(GraphQLID)},
 		title: { type: GraphQLString },
 		content: { type: GraphQLString },
 		userId: { type: GraphQLID },

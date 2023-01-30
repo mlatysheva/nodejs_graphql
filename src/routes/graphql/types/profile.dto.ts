@@ -34,7 +34,6 @@ export const createProfileDTO = new GraphQLInputObjectType({
 export const updateProfileDTO = new GraphQLInputObjectType({
 	name: 'updateProfileDTO',
 	fields: {
-    id: { type: new GraphQLNonNull(GraphQLString)},
 		avatar: { type: GraphQLString },
 		sex: { type: GraphQLString },
 		birthday: { type: GraphQLInt },
