@@ -1,4 +1,4 @@
-import { GraphQLList, GraphQLNonNull, GraphQLObjectType, GraphQLString } from 'graphql';
+import { GraphQLID, GraphQLList, GraphQLNonNull, GraphQLObjectType } from 'graphql';
 import { UserEntity } from '../../utils/DB/entities/DBUsers';
 import { userDTO } from './types/user.dto';
 import { profileDTO } from './types/profile.dto';
@@ -25,12 +25,14 @@ export const RootQuery = new GraphQLObjectType({
 				return await context.db.profiles.findMany();
 			},
 		},
+
     posts: {
 			type: new GraphQLList(postDTO),
 			async resolve(source, args, context): Promise<PostEntity[]> {
 				return await context.db.posts.findMany();
 			},
 		},
+
     memberTypes: {
 			type: new GraphQLList(memberTypeDTO),
 			async resolve(source, args, context): Promise<MemberTypeEntity[]> {
@@ -41,7 +43,7 @@ export const RootQuery = new GraphQLObjectType({
     user: {
       type: userDTO,
       args: {
-        id: { type: new GraphQLNonNull(GraphQLString) },
+        id: { type: new GraphQLNonNull(GraphQLID) },
       },
       async resolve(_, { id }, context): Promise<UserEntity> {
         const user = await context.db.users.findOne({
@@ -55,10 +57,11 @@ export const RootQuery = new GraphQLObjectType({
         return user;
       },
     },
+
     profile: {
       type: profileDTO,
       args: {
-        id: { type: new GraphQLNonNull(GraphQLString) },
+        id: { type: new GraphQLNonNull(GraphQLID) },
       },
       async resolve(_, { id }, context): Promise<ProfileEntity> {
         const profile = await context.db.profiles.findOne({
@@ -72,10 +75,11 @@ export const RootQuery = new GraphQLObjectType({
         return profile;
       },
     },
+
     post: {
       type: postDTO,
       args: {
-        id: { type: new GraphQLNonNull(GraphQLString) },
+        id: { type: new GraphQLNonNull(GraphQLID) },
       },
       async resolve(_, { id }, context): Promise<PostEntity> {
         const post = await context.db.profiles.findOne({
@@ -89,10 +93,11 @@ export const RootQuery = new GraphQLObjectType({
         return post;
       },
     },
+    
     memberType: {
       type: memberTypeDTO,
       args: {
-        id: { type: new GraphQLNonNull(GraphQLString) },
+        id: { type: new GraphQLNonNull(GraphQLID) },
       },
       async resolve(_, { id }, context): Promise<MemberTypeEntity> {
         const memberType = await context.db.memberTypes.findOne({

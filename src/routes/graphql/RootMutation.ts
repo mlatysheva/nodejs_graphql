@@ -2,6 +2,7 @@ import { GraphQLObjectType } from 'graphql';
 import { createUserMutation } from './mutations/createUser';
 import { createPostMutation } from './mutations/createPost';
 import { createProfileMutation } from './mutations/createProfile';
+import { updateUserMutation } from './mutations/updateUser';
 
 
 export const RootMutation = new GraphQLObjectType({
@@ -10,6 +11,7 @@ export const RootMutation = new GraphQLObjectType({
     createUser: createUserMutation,
     createProfile: createProfileMutation,
     createPost: createPostMutation,
+    updateUser: updateUserMutation,
   }
 });
 

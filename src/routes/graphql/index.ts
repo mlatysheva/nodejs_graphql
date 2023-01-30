@@ -31,7 +31,3 @@ const plugin: FastifyPluginAsyncJsonSchemaToTs = async (
 };
 
 export default plugin;
-
-// не, надо зайти в /src/routes/graphql/index.ts и там, в функции, которая обрабатывает  POST запросы на /, написать реализацию графкл (схемы, резолверы) 
-// пишешь в insomnia/postman POST GraphQL запрос на адрес /graphql 
-
